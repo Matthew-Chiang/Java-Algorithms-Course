@@ -1,0 +1,231 @@
+import edu.princeton.cs.algs4.MinPQ;
+import java.util.*;
+import edu.princeton.cs.algs4.StdIn;
+import edu.princeton.cs.algs4.StdOut;
+
+public class Solver {
+  private int solvedmoves;
+  private boolean solved = false;
+  private Move solutionboard;
+  
+  public Solver(Board initial)           // find a solution to the initial board (using the A* algorithm)
+  {
+    //----------SET UP-------------------
+    MinPQ prime = new MinPQ();
+    MinPQ option = new MinPQ();
+    
+    Move initialmove = new Move(initial,0);
+    
+    Board altinitial = initial.twin();
+    Move altinitialmove = new Move(altinitial,0);
+    
+    // prime
+    LinkedList<Board> initneighbors = new LinkedList<Board>();
+    for(Board n : initial.neighbors())
+    {
+      initneighbors.add(n);
+    }
+    int asize = initneighbors.size();
+    for(int i = 0; i<asize; i++)
+    {
+      Move temp = new Move(initneighbors.pop(),1,initialmove);
+      prime.insert(temp);
+    }
+    
+    // option
+    initneighbors = new LinkedList<Board>();
+    for(Board n : altinitial.neighbors())
+    {
+      initneighbors.add(n);
+    }
+    asize = initneighbors.size();
+    for(int i = 0; i<asize; i++)
+    {
+      Move temp = new Move(initneighbors.pop(),1,altinitialmove);
+      option.insert(temp);
+    }
+    
+    //--------MAIN LOOP---------------
+    boolean reachedgoal = false;
+    
+    while(!reachedgoal) // havent reached goal yet
+    { //main board
+      Move minBoard = (Move)prime.delMin();
+      //System.out.println("current: " + minBoard.current);
+      if(minBoard.current.isGoal()) // if at goal
+      {
+        solvedmoves = minBoard.moves; // record all data
+        solved = true;
+        reachedgoal = true;
+        solutionboard = minBoard;
+      }
+      else // add neighbors
+      {
+        LinkedList<Board> neighbors = new LinkedList<Board>();
+        //System.out.println("dhflhsl;jkfha" + minBoard.current.neighbors());
+        for(Board n : minBoard.current.neighbors())
+        {
+          neighbors.add(n);
+        }
+        /*System.out.println("nextneighbors" + nextneighbors);
+        System.out.println("size: " + nextneighbors.size());*/
+        int arrsize = neighbors.size();
+        
+        for(int i = 0; i<arrsize; i++)
+        {
+          Move temp = new Move(neighbors.pop(),minBoard.moves+1,minBoard);
+          /*System.out.println(!minBoard.prev.current.equals(temp.current));
+          System.out.println("minBoard.prev.current: "+minBoard.prev.current);
+          System.out.println("temp.current: " + temp.current + "\n" );*/
+          if(!minBoard.prev.current.equals(temp.current) || temp.prev.current == null) // if previous is not already in the queue or the first one
+            prime.insert(temp);
+        }
+      }
+      
+      // option board
+      minBoard = (Move)option.delMin();
+      if(minBoard.current.isGoal())
+      {
+        solvedmoves = -1;
+        solutionboard = null;
+        reachedgoal = true;
+      }
+      else
+      {
+        LinkedList<Board> neighbors = new LinkedList<Board>();
+        for(Board n : minBoard.current.neighbors())
+        {
+          neighbors.add(n);
+        }
+        int arrsize = neighbors.size();
+        for(int i = 0; i<arrsize; i++)
+        {
+          Move temp = new Move(neighbors.pop(),minBoard.moves+1,minBoard);
+          if(!minBoard.prev.current.equals(temp.current) || temp.prev.current == null) // if previous is not already in the queue or the first one
+            option.insert(temp);
+        }
+      }
+    }
+    
+    
+  }
+  private class Move implements Comparable<Move>
+  {
+    public Board current;
+    public Move prev;
+    public int moves;
+    public int priority;
+    
+    public Move(Board board, int inmoves)
+    {
+      current = board;
+      moves = inmoves;
+      priority = current.manhattan();
+    }
+    public Move(Board board, int inmoves, Move pboard)
+    {
+      this(board,inmoves);
+      prev = pboard;
+    }
+    public int compareTo(Move that)
+    {
+      int valthis = priority + moves;
+      int valthat = that.priority + that.moves;
+      
+      if(valthis == valthat)
+        return 0;
+      else if(valthis>valthat)
+        return 1;
+      else
+        return -1;
+    }
+  }
+ //--------REST OF THE API ------------- 
+  public boolean isSolvable()            // is the initial board solvable?
+  {
+    return solved;
+  }
+  public int moves()                     // min number of moves to solve initial board; -1 if unsolvable
+  {
+    return solvedmoves;
+  }
+  public Iterable<Board> solution()      // sequence of boards in a shortest solution; null if unsolvable
+  { // solutionboard is the final board
+    
+    Move pointer = solutionboard;
+    LinkedList<Board> solutions = new LinkedList<Board>();
+    do
+    {
+      Move temp;
+      temp = pointer.prev;
+      solutions.add(pointer.current);
+      pointer = temp;
+    }while(pointer != null);
+    return solutions;
+  }
+  /*public static void main(String[] args) // solve a slider puzzle (given below)
+  {
+    int[][] testarr = new int[3][3];
+    testarr[0][0] = 8;
+    testarr[0][1] = 1;
+    testarr[0][2] = 3;
+    
+    testarr[1][0] = 4;
+    testarr[1][1] = 0;
+    testarr[1][2] = 2;
+    
+    testarr[2][0] = 7;
+    testarr[2][1] = 6;
+    testarr[2][2] = 5;
+    
+    /*testarr[0][0] = 1;
+    testarr[0][1] = 2;
+    testarr[0][2] = 3;
+    
+    testarr[1][0] = 4;
+    testarr[1][1] = 5;
+    testarr[1][2] = 6;
+    
+    testarr[2][0] = 7;
+    testarr[2][1] = 0;
+    testarr[2][2] = 8;
+    
+    Board test = new Board(testarr);
+    
+    LinkedList solutionset = new LinkedList();
+    
+    Solver solveralpha = new Solver(test);
+    for(Board n: solveralpha.solution())
+    {
+      solutionset.add(n);
+    }
+    System.out.println(solutionset);
+    
+    System.out.println(solveralpha.isSolvable());
+    System.out.println(solveralpha.moves());
+  }*/
+  
+  public static void main(String[] args) {
+
+    // create initial board from file
+    //In in = new In(args[0]);
+    int n = StdIn.readInt();
+    int[][] blocks = new int[n][n];
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            blocks[i][j] = StdIn.readInt();
+    Board initial = new Board(blocks);
+
+    // solve the puzzle
+    Solver solver = new Solver(initial);
+
+    // print solution to standard output
+    if (!solver.isSolvable())
+        StdOut.println("No solution possible");
+    else {
+        StdOut.println("Minimum number of moves = " + solver.moves());
+        for (Board board : solver.solution())
+            StdOut.println(board);
+    }
+}
+}

@@ -1,0 +1,34 @@
+   public void open(int row, int col)    // open site (row, col) if it is not open already
+   {
+     //above
+     if(row-2 != 0) // if not on the top row
+     {
+       grid[row-1][col-1] = 1;
+       ds.union(a2dto1d(row,col),a2dto1d(row-1,col));
+     }
+     //below
+     if(row != grid.length)
+     {
+       grid[row-1][col-1] = 1;
+       ds.union(a2dto1d(row,col),a2dto1d(row+1,col));
+     }
+     //left
+     if(col-2 != 0)
+     {
+       grid[row-1][col-1] =1;
+       ds.union(a2dto1d(row,col),a2dto1d(row,col-1));
+     }
+     //right
+     if(col != grid.length)
+     {
+       grid[row-1][col-1] = 1; 
+       ds.union(a2dto1d(row,col),a2dto1d(row,col+1));
+     }
+     
+   }
+   
+   private int a2dto1d (int row, int col)
+   {
+     int q = (row-1)*grid.length + col-1;
+     return q;
+   }

@@ -1,0 +1,167 @@
+import java.util.Arrays;
+import edu.princeton.cs.algs4.StdIn;
+
+public class FastCollinearPoints {
+  private Point[] endpts;
+  public FastCollinearPoints(Point[] points)     // finds all line segments containing 4 or more points
+  {
+    for(int i = 0; i<points.length; i++)
+    {
+      if(points[i] == null)
+        throw new java.lang.IllegalArgumentException();
+    }
+    Arrays.sort(points); // exceptions
+    Point holder = points[0];
+    
+    for(int i = 0; i<points.length; i++)
+    {
+      if(holder.compareTo(points[i])==0 && i != 0)
+      {
+        throw new java.lang.IllegalArgumentException();
+      }
+      holder = points[i];
+    }
+    // end of exceptions
+    
+    endpts = new Point[0];
+    
+    for(int i = 0; i< points.length-1 ; i++) // scan through all points
+    {
+      int count = 0;
+      IndexedSlopes[] slopes = new IndexedSlopes[points.length-1-i]; // has as many slots as j iterates
+      for(int j = i+1; j < points.length; j++)
+      {
+        double tempslope = points[i].slopeTo(points[j]); 
+        IndexedSlopes tempobject = new IndexedSlopes(j,tempslope);
+        slopes[count++] = tempobject;
+      }
+      
+      Arrays.sort(slopes); // sorts the slopes so that the program is able to find consecutive points
+      /*
+      for(int p = 0; p<slopes.length; p++)
+      {
+        System.out.println("slopes: " + slopes[p].slope);
+      }*/
+      
+      // Determine if there are three or more slopes that are the same
+      
+      double repeat = slopes[0].slope;
+      int r = 0;
+      
+      for(int k = 0; k< slopes.length;)
+      {
+        while(r<slopes.length-1 && repeat == slopes[r].slope)
+        {
+          r++;
+        }
+        if(r-k >=  3)
+        {
+          Point[] insert = new Point[r-k+1];
+          for( int q = k ;  q<r+1 ; q++) // inserting the points indexed at j
+          {
+            insert[q-k] = points[slopes[q].index];
+          }
+          insert[insert.length-1] = points[i]; //  inserting the point indexed at i
+          
+          Arrays.sort(insert); // sorting to only accept lines with indexes at i as the smallest point
+          
+          if(insert[0].compareTo(points[i]) == 0)
+          {
+            Point[] temppts = new Point[endpts.length];
+            for(int m = 0; m<temppts.length; m++)
+              temppts[m] = endpts[m];
+            
+            endpts = new Point[endpts.length + 2];
+            
+            for(int m = 0; m<temppts.length;m++)
+              endpts[m] = temppts[m];
+            
+            endpts[endpts.length-1] = insert[0];
+            endpts[endpts.length-2] = insert[insert.length-1];
+            
+            
+          }
+          if(k == r && r== slopes.length-1)
+            k++;
+          else
+            k=r;
+          repeat = slopes[r].slope;
+        }
+        else
+        {
+          if(k == r && r== slopes.length-1)
+            k++;
+          else
+            k=r;
+          repeat = slopes[r].slope;
+        }
+      }
+    }
+  }
+  
+  //IndexedSlopes Class
+  
+  private class IndexedSlopes implements Comparable<IndexedSlopes>
+  {
+    public int index;
+    public double slope;
+    public IndexedSlopes(int ind, double slp)
+    {
+      index = ind;
+      slope = slp;
+    }
+    public int compareTo(IndexedSlopes that)
+    {
+      int compslp = Double.compare(slope,that.slope);
+      if(compslp == 0)
+        return index-that.index;
+      else
+        return compslp;
+    }
+    public String toString()
+    {
+      return "index: " + index + " slope: " +slope;
+    }
+  }
+  
+  public int numberOfSegments()        // the number of line segments
+  {
+    return endpts.length/2;
+  }
+  
+  public LineSegment[] segments()                // the line segments
+  {
+    int pointer = 0;
+    LineSegment[] seg = new LineSegment [numberOfSegments()];
+    for(int i = 0; i< seg.length; i++)
+    {
+      LineSegment temp = new LineSegment(endpts[pointer],endpts[pointer+1]);
+      seg[i] = temp;
+      pointer+=2;
+    }
+    return seg;
+  }
+  public static void main(String args[])
+  {
+    int n = StdIn.readInt();
+    Point[] testarr = new Point[n];
+    
+    for (int i = 0; i < n; i++) {
+        int x = StdIn.readInt();
+        int y = StdIn.readInt();
+        testarr[i] = new Point(x, y);
+    }
+    
+    FastCollinearPoints  test = new FastCollinearPoints(testarr);
+    System.out.println(test.numberOfSegments() + " num");
+    
+    LineSegment[] templine;
+    templine = test.segments();
+    
+    for(int i = 0; i<templine.length; i++)
+    {
+      System.out.println(templine[i].toString());
+    }
+    
+  }
+}
